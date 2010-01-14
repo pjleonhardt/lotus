@@ -1,0 +1,156 @@
+	   __                                        __                 ___  
+	  /\ \                                      /\ \              /'___\ 
+	  \ \ \         __     __      __    ___    \_\ \        ___ /\ \__/ 
+	   \ \ \  __  /'__`\ /'_ `\  /'__`\/' _ `\  /'_` \      / __`\ \ ,__\
+	    \ \ \L\ \/\  __//\ \L\ \/\  __//\ \/\ \/\ \L\ \    /\ \L\ \ \ \_/
+	     \ \____/\ \____\ \____ \ \____\ \_\ \_\ \___,_\   \ \____/\ \_\ 
+	      \/___/  \/____/\/___L\ \/____/\/_/\/_/\/__,_ /    \/___/  \/_/ 
+			       /\____/                                       
+			       \_/__/
+
+							      /
+							    .7
+						 \       , //
+						 |\.--._/|//
+						/\ ) ) ).'/
+					       /(  \  // /
+					      /(   J`((_/ \
+					     / ) | _\     /
+					    /|)  \  eJ    L
+					   |  \ L \   L   L
+					  /  \  J  `. J   L
+					  |  )   L   \/   \
+					 /  \    J   (\   /
+		       _....___         |  \      \   \```
+		,.._.-'        '''--...-||\     -. \   \
+	      .'.=.'                    `         `.\ [ Y
+	     /   /                                  \]  J
+	    Y / Y                                    Y   L
+	    | | |          \                         |   L
+	    | | |           Y                        A  J
+	    |   I           |                       /I\ /
+	    |    \          I             \        ( |]/|
+	    J     \         /._           /        -tI/ |
+	     L     )       /   /'-------'J           `'-:.
+	     J   .'      ,'  ,' ,     \   `'-.__          \
+	      \ T      ,'  ,'   )\    /|        ';'---7   /
+	       \|    ,'L  Y...-' / _.' /         \   /   /
+		J   Y  |  J    .'-'   /         ,--.(   /
+		 L  |  J   L -'     .'         /  |    /\
+		 |  J.  L  J     .-;.-/       |    \ .' /
+		 J   L`-J   L____,.-'`        |  _.-'   |
+		  L  J   L  J                  ``  J    |
+		  J   L  |   L                     J    |
+		   L  J  L    \                    L    \
+		   |   L  ) _.'\                    ) _.'\
+		   L    \('`    \                  ('`    \
+		    ) _.'\`-....'                   `-....'
+		   ('`    \
+		    `-.___/   sk
+
+ __    __                  __  __                                              
+/\ \__/\ \                /\ \/\ \          __                                 
+\ \ ,_\ \ \___      __    \ \ \ \ \    ___ /\_\    ___    ___   _ __    ___    
+ \ \ \/\ \  _ `\  /'__`\   \ \ \ \ \ /' _ `\/\ \  /'___\ / __`\/\`'__\/' _ `\  
+  \ \ \_\ \ \ \ \/\  __/    \ \ \_\ \/\ \/\ \ \ \/\ \__//\ \L\ \ \ \/ /\ \/\ \ 
+   \ \__\\ \_\ \_\ \____\    \ \_____\ \_\ \_\ \_\ \____\ \____/\ \_\ \ \_\ \_\
+    \/__/ \/_/\/_/\/____/     \/_____/\/_/\/_/\/_/\/____/\/___/  \/_/  \/_/\/_/
+	       ____                                  __         
+	      /\  _`\                               /\ \        
+	      \ \,\L\_\     __     __     _ __   ___\ \ \___    
+	       \/_\__ \   /'__`\ /'__`\  /\`'__\/'___\ \  _ `\  
+		 /\ \L\ \/\  __//\ \L\.\_\ \ \//\ \__/\ \ \ \ \ 
+		 \ `\____\ \____\ \__/.\_\\ \_\\ \____\\ \_\ \_\
+		  \/_____/\/____/\/__/\/_/ \/_/ \/____/ \/_/\/_/
+
+L.O.T.U.S.
+
+Lotus is designed to be a powerful, flexible searching utility. It does however, take significant setup, due to the nature
+of trying to build a search tool to cover everything. In particular, you will need to configure what "resources" you want
+Lotus to be able to search, and how to translate the search terms into MySQL queries.
+
+
+== Initializer Config --
+  Lotus.configure do |config|
+    config.resource :job_offer do |u|
+      u.default_operators = {:like => "Like", :fulltext => "Contains", :is => "Is"}     
+
+      u.add_criterion :emplid, :display => "Employee ID", :operators => {:is => "Is"}
+      u.add_criterion :name
+      u.add_criterion :position_nbr, :display => "Position Number"
+      u.add_criterion :department, :display => "Department"
+      u.add_criterion :all, :display => "Anything", :operators => {:fulltext => "Contains"}
+    end
+  end
+
+
+== Controller Usage
+  def search
+    @c = YourCondition.from_params(params[:lotus])
+    original_condition = YourCondition.from_params(params[:lotus])
+    YourCondition.translate_fields(@c)
+    if(original_condition.column_scope.include?("department"))
+      @results = YourModel.find(:all, :conditions => @c.to_sql, :include => :department)
+    else
+      @results = YourModel.find(:all, :conditions => @c.to_sql)
+    end
+  end
+  
+== Setting Up Your Condition
+Your custom Condition will do the mapping from your criterion names to database fields and the mapping from your operator
+names to MySQL operators. Also, if you wish to modify the values of the search (like adding wildcards), you should do
+that here, as well.
+
+An example custom Condition would be as follows:
+
+  class YourCondition < Lotus::Condition
+    # Here you translate the criteria from the initializer into the MySQL equivalents...
+    #
+    def self.translate_fields(condition)
+      #recursively traverse the condition, for nested conditions
+      unless condition.conditions.blank?      
+        condition.conditions.each do |c|   
+          translate_fields(c)
+        end
+      else
+        if(condition.col_name == "all")
+          condition.col_name = "search_cache"
+        elsif condition.col_name == "department"
+          condition.col_name = "departments.department_name"
+        end
+       
+        # Add wilcards
+        if(condition.col_operator == 'like')
+          condition.col_value += "%"
+        elsif(condition.col_operator == "fulltext")
+          condition.col_value = condition.col_value.split().map {|x| "+{x}*"}.join(" ")
+        end
+        
+        # Change Operators
+        condition.col_operator = self.change_operator(condition.col_operator)         
+      end
+    
+      def self.change_operator(op)
+        translations = { 
+          :ntlike => "NOT LIKE",
+          :like   => "LIKE",
+          :is     => "=",
+          :not    => "!=",
+          :gt     => ">",
+          :lt     => "<",
+          :fulltext   => :full 
+        }
+       return translations[operator.to_sym] if translations.keys.include?(operator.to_sym)
+       raise Lotus::OperatorNotFound.new("#{operator} is not a valid operator")
+     end
+   end
+
+== End Usage
+
+<% lotus_form(:job_offer, '/search') do %>
+  <%= text_field :something, :special %>
+  <%= lotus %>
+  <%= submit_tag("Search!") %>
+<% end %>
+ 
+ 
