@@ -70,7 +70,7 @@ of trying to build a search tool to cover everything. In particular, you will ne
 Lotus to be able to search, and how to translate the search terms into MySQL queries.
 
 
-== Initializer Config --
+== Initializer Config
   Lotus.configure do |config|
     config.resource :job_offer do |u|
       u.default_operators = {:like => "Like", :fulltext => "Contains", :is => "Is"}     
