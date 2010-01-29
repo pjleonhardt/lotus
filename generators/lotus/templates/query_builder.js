@@ -85,8 +85,10 @@ var QueryBuilder = Class.create({
     var ele = Event.element(event);
 
     var change_operators = false;
+    var change_values = false;
     if( ele.hasClassName("criteriaSelect") ) {
       change_operators = true;
+      change_values = true;
     }
   
     ele = ele.up(".tuple");
@@ -102,7 +104,17 @@ var QueryBuilder = Class.create({
       condition.col_name = ele.down(".criteriaSelect").value;
       ele.down(".operatorSelect").replace(this.buildOperatorSelect(condition));
     }  
-   
+    
+    if(change_values) {
+      // re-add listener to value field
+      value_field = ele.down(".valueField")
+      condition.col_value = value_field.value;
+      value_field.replace(this.buildValueField(condition));
+      //get new object
+      new_value_field = ele.down(".valueField")
+      Event.observe(new_value_field, "change", this.watchCondition.bindAsEventListener(this));
+    }
+
     condition.setTuple($H({col_name: ele.down(".criteriaSelect").value, col_operator: ele.down(".operatorSelect").value, col_value: ele.down(".valueField").value}));
   }, 
 
@@ -112,7 +124,7 @@ var QueryBuilder = Class.create({
           sel = this.buildCriteriaSelect(condition),
            op = this.buildOperatorSelect(condition),
           val = this.buildValueField(condition);
-
+          
     tuple.appendChild(sel);
     tuple.appendChild(op);
     tuple.appendChild(val);
@@ -167,12 +179,42 @@ var QueryBuilder = Class.create({
     return op;
   },
   
-  buildValueField: function(condition) {
+  buildBooleanSelectValueField: function(condition) {
+    opts = [];
+    if(condition.col_value) {
+      selected_index = 0;
+      if(condition.col_value == "0" || condition.col_value == 0) {
+        selected_index = 1;
+      }
+      
+      opts[0] = Builder.node("option", {value: "1"}, "Yes");
+      opts[1] = Builder.node("option", {value: "0"}, "No");
+      select = Builder.node("select", {className: "valueField"}, opts);
+      select.selectedIndex = selected_index;
+      return select;
+    } else {
+      opts[0] = Builder.node("option", {value: "1"}, "Yes");
+      opts[1] = Builder.node("option", {value: "0"}, "No");
+      return Builder.node("select", {className: "valueField"}, opts);
+    }
+  },
+  
+  buildTextValueField: function(condition) {
     if(condition.col_value) {
       return Builder.node("input", { className: "valueField" , type: "text" ,  value: condition.col_value} );
     }
     else {
       return Builder.node("input", { className: "valueField" , type: "text" } );
+    }
+  },
+  
+  buildValueField: function(condition) {
+    criteria = this.getCriteria(condition.col_name);
+    if(criteria.type == 'boolean') {      
+      return this.buildBooleanSelectValueField(condition);
+    }    
+    else {
+      return this.buildTextValueField(condition);
     }
   },
 
@@ -331,12 +373,13 @@ var Condition = Class.create({
     this.col_operator = "";
     this.col_value = "";
     this.conjunction = "AND";
+    this.col_type = "text";
 
     if(options.get("col_name")) 
       this.col_name = options.get("col_name");
     if(options.get("col_operator"))
       this.col_operator = options.get("col_operator");
-    if(options.get("col_value"))
+    if(options.get("col_value")!=="") //otherwise a value of "0" will fail the check
       this.col_value = options.get("col_value");
  
     if(options.get("conjunction"))

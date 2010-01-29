@@ -78,6 +78,7 @@ Lotus to be able to search, and how to translate the search terms into MySQL que
       u.add_criterion :emplid, :display => "Employee ID", :operators => {:is => "Is"}
       u.add_criterion :name
       u.add_criterion :position_nbr, :display => "Position Number"
+      u.add_criterion :is_active, :display => "Active", :operators => {:is => "Is"}, :type => :boolean
       u.add_criterion :department, :display => "Department"
       u.add_criterion :all, :display => "Anything", :operators => {:fulltext => "Contains"}
     end
