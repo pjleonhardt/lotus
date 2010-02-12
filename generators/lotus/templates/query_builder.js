@@ -181,22 +181,44 @@ var QueryBuilder = Class.create({
   
   buildBooleanSelectValueField: function(condition) {
     opts = [];
+    opts[0] = Builder.node("option", {value: "1"}, "Yes");
+    opts[1] = Builder.node("option", {value: "0"}, "No");
+    select = Builder.node("select", {className: "valueField"}, opts);
+
     if(condition.col_value) {
       selected_index = 0;
       if(condition.col_value == "0" || condition.col_value == 0) {
         selected_index = 1;
-      }
-      
-      opts[0] = Builder.node("option", {value: "1"}, "Yes");
-      opts[1] = Builder.node("option", {value: "0"}, "No");
-      select = Builder.node("select", {className: "valueField"}, opts);
+      }      
       select.selectedIndex = selected_index;
-      return select;
-    } else {
-      opts[0] = Builder.node("option", {value: "1"}, "Yes");
-      opts[1] = Builder.node("option", {value: "0"}, "No");
-      return Builder.node("select", {className: "valueField"}, opts);
     }
+    return select;
+  },
+  
+  
+  buildSelectValueView: function(condition) {
+    criteria = this.getCriteria(condition.col_name);
+    choices = criteria.choices;
+    opts = [];
+    i = 0;
+    for(var key in choices) {
+      opts[i] = Builder.node("option", {value: key}, choices[key]);
+      i++;
+    }
+    select = Builder.node("select", {className: "valueField"}, opts);
+    
+    if(condition.col_value) {
+      selected_index = 0;
+      j = 0;
+      for(var key in choices) {
+        if(key == condition.col_value) {
+          select.selectedIndex = j;
+          break;
+        }
+        j++;
+      }
+    }
+    return select;
   },
   
   buildTextValueField: function(condition) {
@@ -207,12 +229,15 @@ var QueryBuilder = Class.create({
       return Builder.node("input", { className: "valueField" , type: "text" } );
     }
   },
+
   
   buildValueField: function(condition) {
     criteria = this.getCriteria(condition.col_name);
     if(criteria.type == 'boolean') {      
       return this.buildBooleanSelectValueField(condition);
-    }    
+    } else if(criteria.type == 'select') {
+      return this.buildSelectValueView(condition);
+    }
     else {
       return this.buildTextValueField(condition);
     }

@@ -73,7 +73,8 @@ class Lotus
       operators    = options.delete(:operators) || self.default_operators
       display_name = options.delete(:display)   || criterion_name.to_s.titleize
       type         = options.delete(:type)      || self.default_type
-      criteria << Criterion.new(criterion_name, display_name, operators, type)
+      choices      = options.delete(:choices)   || {}
+      criteria << Criterion.new(criterion_name, display_name, operators, type, choices)
     end
     
     # A Criterion is an attribute, real or virtual, associated with the resource you are searching. 
@@ -81,13 +82,14 @@ class Lotus
     # are things like, "equals", "less than", "like", "contains", etc...
     #
     class Criterion
-      attr_accessor :name, :display, :operators, :type
+      attr_accessor :name, :display, :operators, :type, :choices
       
-      def initialize(name, display, operators, type)
+      def initialize(name, display, operators, type, choices)
         self.name = name
-        self.display = display
+        self.display   = display
         self.operators = operators
-        self.type = type
+        self.type      = type
+        self.choices   = choices
       end
     end
   end
