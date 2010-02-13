@@ -74,6 +74,7 @@ class Lotus
       display_name = options.delete(:display)   || criterion_name.to_s.titleize
       type         = options.delete(:type)      || self.default_type
       choices      = options.delete(:choices)   || {}
+
       criteria << Criterion.new(criterion_name, display_name, operators, type, choices)
     end
     
@@ -90,6 +91,22 @@ class Lotus
         self.operators = operators
         self.type      = type
         self.choices   = choices
+      end
+      
+      # Build the Proc'd choices each time so the dynamic choices don't go stale.
+      def preload!
+        @old_choices = choices
+        # If choices was a Proc, give it a call
+        self.choices = choices.call if choices.is_a? Proc
+        
+        # turns {:id1 => value_1, :id2=> value_2} into => [[id1, value1], [id2,value2]]
+        # alphabetical by value
+        self.choices = choices.sort_by(&:last)
+      end
+      
+      # Replace the choices with the old (potentially Proc) choices
+      def unload!
+        self.choices = @old_choices
       end
     end
   end

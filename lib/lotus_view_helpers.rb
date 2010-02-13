@@ -39,6 +39,8 @@ module LotusViewHelpers
   # 
   def lotus_javascript(resource, target_id, qb_name, condition = nil)
     unicorn = Lotus.unicorns.find { |u| u.name == resource }
+    unicorn.criteria.each(&:preload!)
+    
     str = "<script type=\"text/javascript\">
         var #{qb_name} = new QueryBuilder(
          {root: $('#{target_id}'),
@@ -46,6 +48,8 @@ module LotusViewHelpers
     if(condition)
       str << ", condition: new Condition(#{condition.to_json})"
     end
+    
+    unicorn.criteria.each(&:unload!)
     
     str << "});
       </script>"

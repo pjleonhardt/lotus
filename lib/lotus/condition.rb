@@ -91,20 +91,15 @@ class Lotus
   #        # Change Operators
   #        condition.col_operator = self.change_operator(condition.col_operator)         
   #      end
-  #    
-  #      def self.change_operator(op)
-  #        translations = { 
-  #          :ntlike => "NOT LIKE",
-  #          :like   => "LIKE",
-  #          :is     => "=",
-  #          :not    => "!=",
-  #          :gt     => ">",
-  #          :lt     => "<",
-  #          :fulltext   => :full 
-  #        }
-  #       return translations[operator.to_sym] if translations.keys.include?(operator.to_sym)
-  #       raise Lotus::OperatorNotFound.new("#{operator} is not a valid operator")
-  #     end
+  #
+  #      # If you need to change/add-to the operator translations, just define translations like so:
+  #      #  Any operators that you wish to turn into FullText should translate to :full
+  #      #
+  #      def translations
+  #        self.default_translations[:is] = 'EQ'
+  #        self.default_translations.merge(:full_text_star => :full)
+  #      end
+  #
   #   end
   #    
   #    
@@ -119,7 +114,7 @@ class Lotus
     #
   
     attr_accessor :col_name, :col_value, :col_operator, :conditions, :conjunction
-  
+      
     def initialize(options = {})
       options.symbolize_keys!
       @conjunction = options.delete(:conjunction) || Condition.default_conjunction
@@ -130,6 +125,27 @@ class Lotus
       @col_name = options.delete(:col_name)
       @col_value = options.delete(:col_value)
       @col_operator = options.delete(:col_operator)
+    end
+
+    def self.default_translations 
+      {
+        :ntlike => "NOT LIKE",
+        :like   => "LIKE",
+        :is     => "=",
+        :not    => "!=",
+        :gt     => ">",
+        :lt     => "<",
+        :fulltext   => :full
+      }
+    end
+    
+    def self.translations 
+      self.default_translations  
+    end
+    
+    def self.change_operator(operator)
+      return self.translations[operator.to_sym] if self.translations.keys.include?(operator.to_sym)
+      raise Lotus::OperatorNotFound.new("#{operator} is not a valid operator")      
     end
 
     def self.default_conjunction

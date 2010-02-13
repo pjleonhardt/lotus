@@ -195,29 +195,29 @@ var QueryBuilder = Class.create({
     return select;
   },
   
-  
+  // Expects choices to be in format of [[id1, value1],[id2, value2]]
   buildSelectValueView: function(condition) {
     criteria = this.getCriteria(condition.col_name);
     choices = criteria.choices;
     opts = [];
-    i = 0;
-    for(var key in choices) {
-      opts[i] = Builder.node("option", {value: key}, choices[key]);
+    for(var i = 0; i < choices.length; i++) {
+      opts[i] = Builder.node("option", {value: choices[i][0]}, choices[i][1]);
       i++;
     }
     select = Builder.node("select", {className: "valueField"}, opts);
-    
+
+    selected_index = 0;    
     if(condition.col_value) {
-      selected_index = 0;
       j = 0;
       for(var key in choices) {
         if(key == condition.col_value) {
-          select.selectedIndex = j;
+          selected_index = j;
           break;
         }
         j++;
       }
     }
+    select.selectedIndex = selected_index;
     return select;
   },
   
