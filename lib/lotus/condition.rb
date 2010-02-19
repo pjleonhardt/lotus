@@ -228,6 +228,7 @@ class Lotus
         @col_name = 
         unless @col_value.blank? # Allow For IS NULL        
           @col_value = @col_value.downcase unless Lotus.case_sensitive
+          @col_name = "LOWER(#{col_name})" unless Lotus.case_sensitive
           if @col_operator.to_sym == :full
             sql << sanitize(["MATCH (%s) AGAINST ('%s' IN BOOLEAN MODE )", @col_name, @col_value])              
           else
