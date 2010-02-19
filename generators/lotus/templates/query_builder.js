@@ -202,7 +202,6 @@ var QueryBuilder = Class.create({
     opts = [];
     for(var i = 0; i < choices.length; i++) {
       opts[i] = Builder.node("option", {value: choices[i][0]}, choices[i][1]);
-      i++;
     }
     select = Builder.node("select", {className: "valueField"}, opts);
 
